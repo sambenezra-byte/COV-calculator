@@ -205,6 +205,12 @@
       background: #f0fbf4;
     }
 
+    .message.warning {
+      color: #7a4a00;
+      border-color: #e7c57c;
+      background: #fff8e8;
+    }
+
     footer {
       border-top: 1px solid var(--gray-300);
       padding: 18px 0 24px;
@@ -251,7 +257,7 @@
       <p id="instructions-heading"><strong>Instructions:</strong></p>
       <p>This tool calculates coefficient of variation (COV) values from CMAP amplitudes obtained during a CMAP qualification exercise.</p>
       <ol>
-        <li>Enter the Trial 1 and Trial 2 CMAP amplitudes for each muscle and side.</li>
+        <li>Enter the Trial 1 and Trial 2 CMAP amplitudes for each muscle and side you want to calculate.</li>
         <li>Click "Calculate COV".</li>
         <li>Review the calculated COV values.</li>
         <li>Copy the resulting COV values into the Teckro qualification survey.</li>
@@ -383,7 +389,7 @@
       function calculateAll() {
         clearValidation();
 
-        var hasMissing = false;
+        var hasPartialRow = false;
         var hasNonNumeric = false;
         var hasNegative = false;
         var hasZeroMean = false;
@@ -391,6 +397,16 @@
 
         rows.forEach(function (row) {
           var inputs = Array.prototype.slice.call(row.querySelectorAll("input"));
+          var resultCell = row.querySelector(".result-cell");
+          var firstBlank = inputs[0].value.trim() === "";
+          var secondBlank = inputs[1].value.trim() === "";
+
+          resultCell.textContent = "";
+
+          if (firstBlank && secondBlank) {
+            return;
+          }
+
           var first = parseAmplitude(inputs[0]);
           var second = parseAmplitude(inputs[1]);
 
@@ -400,7 +416,7 @@
               inputs[index].setAttribute("aria-invalid", "true");
 
               if (parsed.reason === "missing") {
-                hasMissing = true;
+                hasPartialRow = true;
               } else if (parsed.reason === "negative") {
                 hasNegative = true;
               } else {
@@ -417,34 +433,34 @@
             });
           }
 
-          parsedRows.push({
-            row: row,
-            valid: first.valid && second.valid && !(first.valid && second.valid && first.value === 0 && second.value === 0),
-            trial1: first.value,
-            trial2: second.value
-          });
+          if (first.valid && second.valid && !(first.value === 0 && second.value === 0)) {
+            parsedRows.push({
+              row: row,
+              trial1: first.value,
+              trial2: second.value
+            });
+          }
         });
 
-        if (hasMissing || hasNonNumeric || hasNegative || hasZeroMean) {
-          rows.forEach(function (row) {
-            row.querySelector(".result-cell").textContent = "";
-          });
-
-          var messages = [];
-          if (hasMissing) {
-            messages.push("Please enter both Trial 1 and Trial 2 CMAP amplitudes for every muscle and side.");
+        if (parsedRows.length === 0) {
+          if (hasPartialRow || hasNonNumeric || hasNegative || hasZeroMean) {
+            var errorMessages = [];
+            if (hasPartialRow) {
+              errorMessages.push("Rows with only one trial entered were not calculated. Enter both Trial 1 and Trial 2 for any row you want to calculate.");
+            }
+            if (hasNonNumeric) {
+              errorMessages.push("All CMAP amplitudes must be numeric values.");
+            }
+            if (hasNegative) {
+              errorMessages.push("CMAP amplitudes cannot be negative.");
+            }
+            if (hasZeroMean) {
+              errorMessages.push("COV cannot be calculated when both trial amplitudes are 0 for a row.");
+            }
+            setMessage(errorMessages.join(" "), "error");
+          } else {
+            setMessage("Enter Trial 1 and Trial 2 CMAP amplitudes for at least one muscle and side.", "error");
           }
-          if (hasNonNumeric) {
-            messages.push("All CMAP amplitudes must be numeric values.");
-          }
-          if (hasNegative) {
-            messages.push("CMAP amplitudes cannot be negative.");
-          }
-          if (hasZeroMean) {
-            messages.push("COV cannot be calculated when both trial amplitudes are 0 for a row.");
-          }
-
-          setMessage(messages.join(" "), "error");
           return;
         }
 
@@ -453,7 +469,25 @@
           entry.row.querySelector(".result-cell").textContent = cov.toFixed(2);
         });
 
-        setMessage("COV values calculated. No information was stored or transmitted.", "success");
+        if (hasPartialRow || hasNonNumeric || hasNegative || hasZeroMean) {
+          var warningMessages = ["COV values were calculated for completed rows."];
+          if (hasPartialRow) {
+            warningMessages.push("Rows with only one trial entered were not calculated.");
+          }
+          if (hasNonNumeric) {
+            warningMessages.push("Rows with non-numeric values were not calculated.");
+          }
+          if (hasNegative) {
+            warningMessages.push("Rows with negative values were not calculated.");
+          }
+          if (hasZeroMean) {
+            warningMessages.push("Rows with both trial amplitudes equal to 0 were not calculated.");
+          }
+          warningMessages.push("No information was stored or transmitted.");
+          setMessage(warningMessages.join(" "), "warning");
+        } else {
+          setMessage("COV values calculated for completed rows. No information was stored or transmitted.", "success");
+        }
       }
 
       function clearAll() {
