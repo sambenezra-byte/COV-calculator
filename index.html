@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMAP Qualification COV Calculator</title>
+  <style>
+    :root {
+      --blue-900: #12345b;
+      --blue-800: #17446f;
+      --blue-100: #eaf2f8;
+      --gray-900: #1f2933;
+      --gray-700: #4b5563;
+      --gray-300: #cbd5e1;
+      --gray-100: #f8fafc;
+      --white: #ffffff;
+      --error: #a61b1b;
+      --focus: #2f80c1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--white);
+      color: var(--gray-900);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    header {
+      background: var(--blue-900);
+      color: var(--white);
+      padding: 28px 20px;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    main {
+      padding: 28px 0 36px;
+    }
+
+    .instructions {
+      margin-bottom: 24px;
+      padding: 18px 20px;
+      border: 1px solid var(--gray-300);
+      border-left: 5px solid var(--blue-800);
+      background: var(--gray-100);
+    }
+
+    .instructions p {
+      margin: 0 0 10px;
+    }
+
+    .instructions ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .instructions li {
+      margin: 4px 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+
+    caption {
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 700;
+      color: var(--blue-900);
+      background: var(--blue-100);
+      border-bottom: 1px solid var(--gray-300);
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border: 1px solid var(--gray-300);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--blue-800);
+      color: var(--white);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(even) {
+      background: var(--gray-100);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      min-width: 130px;
+      padding: 9px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: 4px;
+      color: var(--gray-900);
+      font: inherit;
+      background: var(--white);
+    }
+
+    input[type="number"]:focus {
+      outline: 3px solid rgba(47, 128, 193, 0.24);
+      border-color: var(--focus);
+    }
+
+    input.input-error {
+      border-color: var(--error);
+      background: #fff7f7;
+    }
+
+    .result-cell {
+      font-weight: 700;
+      color: var(--blue-900);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 10px 18px;
+      border: 1px solid var(--blue-800);
+      border-radius: 4px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--blue-800);
+      color: var(--white);
+    }
+
+    .primary:hover,
+    .primary:focus {
+      background: var(--blue-900);
+    }
+
+    .secondary {
+      background: var(--white);
+      color: var(--blue-800);
+    }
+
+    .secondary:hover,
+    .secondary:focus {
+      background: var(--blue-100);
+    }
+
+    button:focus {
+      outline: 3px solid rgba(47, 128, 193, 0.32);
+      outline-offset: 2px;
+    }
+
+    .message {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .message:empty {
+      display: none;
+    }
+
+    .message.error {
+      color: var(--error);
+      border-color: #e8b6b6;
+      background: #fff7f7;
+    }
+
+    .message.success {
+      color: #14532d;
+      border-color: #bbdfc8;
+      background: #f0fbf4;
+    }
+
+    footer {
+      border-top: 1px solid var(--gray-300);
+      padding: 18px 0 24px;
+      color: var(--gray-700);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        padding: 22px 16px;
+      }
+
+      .page {
+        width: min(100% - 24px, 1120px);
+      }
+
+      main {
+        padding-top: 20px;
+      }
+
+      .instructions {
+        padding: 14px 16px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="page">
+      <h1>CMAP Qualification COV Calculator</h1>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="instructions" aria-labelledby="instructions-heading">
+      <p id="instructions-heading"><strong>Instructions:</strong></p>
+      <p>This tool calculates coefficient of variation (COV) values from CMAP amplitudes obtained during a CMAP qualification exercise.</p>
+      <ol>
+        <li>Enter the Trial 1 and Trial 2 CMAP amplitudes for each muscle and side.</li>
+        <li>Click "Calculate COV".</li>
+        <li>Review the calculated COV values.</li>
+        <li>Copy the resulting COV values into the Teckro qualification survey.</li>
+        <li>No information entered into this tool is stored or transmitted.</li>
+      </ol>
+    </section>
+
+    <div class="table-wrap">
+      <table>
+        <caption>CMAP amplitude entries and calculated COV values</caption>
+        <thead>
+          <tr>
+            <th scope="col">Muscle</th>
+            <th scope="col">Side</th>
+            <th scope="col">Trial 1 CMAP Amplitude (mV)</th>
+            <th scope="col">Trial 2 CMAP Amplitude (mV)</th>
+            <th scope="col">Calculated COV (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">ADM</th>
+            <td>Right</td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="ADM Right Trial 1 CMAP Amplitude"></td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="ADM Right Trial 2 CMAP Amplitude"></td>
+            <td class="result-cell" aria-live="polite"></td>
+          </tr>
+          <tr>
+            <th scope="row">ADM</th>
+            <td>Left</td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="ADM Left Trial 1 CMAP Amplitude"></td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="ADM Left Trial 2 CMAP Amplitude"></td>
+            <td class="result-cell" aria-live="polite"></td>
+          </tr>
+          <tr>
+            <th scope="row">APB</th>
+            <td>Right</td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="APB Right Trial 1 CMAP Amplitude"></td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="APB Right Trial 2 CMAP Amplitude"></td>
+            <td class="result-cell" aria-live="polite"></td>
+          </tr>
+          <tr>
+            <th scope="row">APB</th>
+            <td>Left</td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="APB Left Trial 1 CMAP Amplitude"></td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="APB Left Trial 2 CMAP Amplitude"></td>
+            <td class="result-cell" aria-live="polite"></td>
+          </tr>
+          <tr>
+            <th scope="row">TA</th>
+            <td>Right</td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="TA Right Trial 1 CMAP Amplitude"></td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="TA Right Trial 2 CMAP Amplitude"></td>
+            <td class="result-cell" aria-live="polite"></td>
+          </tr>
+          <tr>
+            <th scope="row">TA</th>
+            <td>Left</td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="TA Left Trial 1 CMAP Amplitude"></td>
+            <td><input type="number" min="0" step="any" inputmode="decimal" aria-label="TA Left Trial 2 CMAP Amplitude"></td>
+            <td class="result-cell" aria-live="polite"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="primary" id="calculateButton">Calculate COV</button>
+      <button type="button" class="secondary" id="clearButton">Clear All Fields</button>
+    </div>
+
+    <div class="message" id="message" role="status" aria-live="polite"></div>
+  </main>
+
+  <footer>
+    <div class="page">All calculations are performed locally within your browser. No entered data is stored or transmitted.</div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var calculateButton = document.getElementById("calculateButton");
+      var clearButton = document.getElementById("clearButton");
+      var message = document.getElementById("message");
+      var rows = Array.prototype.slice.call(document.querySelectorAll("tbody tr"));
+
+      function setMessage(text, type) {
+        message.textContent = text;
+        message.className = text ? "message " + type : "message";
+      }
+
+      function clearValidation() {
+        rows.forEach(function (row) {
+          var inputs = row.querySelectorAll("input");
+          inputs.forEach(function (input) {
+            input.classList.remove("input-error");
+            input.removeAttribute("aria-invalid");
+          });
+        });
+      }
+
+      function parseAmplitude(input) {
+        var value = input.value.trim();
+
+        if (value === "") {
+          return { valid: false, reason: "missing" };
+        }
+
+        var numberValue = Number(value);
+
+        if (!Number.isFinite(numberValue)) {
+          return { valid: false, reason: "numeric" };
+        }
+
+        if (numberValue < 0) {
+          return { valid: false, reason: "negative" };
+        }
+
+        return { valid: true, value: numberValue };
+      }
+
+      function calculateCov(x1, x2) {
+        var mean = (x1 + x2) / 2;
+        var standardDeviation = Math.sqrt((Math.pow(x1 - mean, 2) + Math.pow(x2 - mean, 2)) / 1);
+        return (standardDeviation / mean) * 100;
+      }
+
+      function calculateAll() {
+        clearValidation();
+
+        var hasMissing = false;
+        var hasNonNumeric = false;
+        var hasNegative = false;
+        var hasZeroMean = false;
+        var parsedRows = [];
+
+        rows.forEach(function (row) {
+          var inputs = Array.prototype.slice.call(row.querySelectorAll("input"));
+          var first = parseAmplitude(inputs[0]);
+          var second = parseAmplitude(inputs[1]);
+
+          [first, second].forEach(function (parsed, index) {
+            if (!parsed.valid) {
+              inputs[index].classList.add("input-error");
+              inputs[index].setAttribute("aria-invalid", "true");
+
+              if (parsed.reason === "missing") {
+                hasMissing = true;
+              } else if (parsed.reason === "negative") {
+                hasNegative = true;
+              } else {
+                hasNonNumeric = true;
+              }
+            }
+          });
+
+          if (first.valid && second.valid && first.value === 0 && second.value === 0) {
+            hasZeroMean = true;
+            inputs.forEach(function (input) {
+              input.classList.add("input-error");
+              input.setAttribute("aria-invalid", "true");
+            });
+          }
+
+          parsedRows.push({
+            row: row,
+            valid: first.valid && second.valid && !(first.valid && second.valid && first.value === 0 && second.value === 0),
+            trial1: first.value,
+            trial2: second.value
+          });
+        });
+
+        if (hasMissing || hasNonNumeric || hasNegative || hasZeroMean) {
+          rows.forEach(function (row) {
+            row.querySelector(".result-cell").textContent = "";
+          });
+
+          var messages = [];
+          if (hasMissing) {
+            messages.push("Please enter both Trial 1 and Trial 2 CMAP amplitudes for every muscle and side.");
+          }
+          if (hasNonNumeric) {
+            messages.push("All CMAP amplitudes must be numeric values.");
+          }
+          if (hasNegative) {
+            messages.push("CMAP amplitudes cannot be negative.");
+          }
+          if (hasZeroMean) {
+            messages.push("COV cannot be calculated when both trial amplitudes are 0 for a row.");
+          }
+
+          setMessage(messages.join(" "), "error");
+          return;
+        }
+
+        parsedRows.forEach(function (entry) {
+          var cov = calculateCov(entry.trial1, entry.trial2);
+          entry.row.querySelector(".result-cell").textContent = cov.toFixed(2);
+        });
+
+        setMessage("COV values calculated. No information was stored or transmitted.", "success");
+      }
+
+      function clearAll() {
+        rows.forEach(function (row) {
+          var inputs = row.querySelectorAll("input");
+          inputs.forEach(function (input) {
+            input.value = "";
+          });
+          row.querySelector(".result-cell").textContent = "";
+        });
+
+        clearValidation();
+        setMessage("", "");
+      }
+
+      calculateButton.addEventListener("click", calculateAll);
+      clearButton.addEventListener("click", clearAll);
+    }());
+  </script>
+</body>
+</html>
